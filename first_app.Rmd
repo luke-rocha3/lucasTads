@@ -1,0 +1,94 @@
+---
+title: "skydaz_app"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny 
+---
+```{r}
+
+```
+
+
+
+```{r setup, include=FALSE}
+# dashboard
+library(flexdashboard)
+# Manipular as tabelas
+library(dplyr)
+# gráficos
+library(ggplot2)
+library(plotly)
+# pegar dados financeiros 
+library(tidyquant)
+# tabela interativa
+library(DT)
+```
+Column {.sidebar}
+
+--------------------------------------------
+
+```{r}
+selectInput(
+  "ticker",
+  "escolha o ticker:",
+  choices = c("PETR4.SA", "BBAS3.SA", "VALE3.SA", "WEGE3.SA")
+  
+  
+)
+
+```
+
+
+```{r download}
+dados_tbl <- reactive({
+ tq_get(input$ticker)
+})
+
+```
+
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### cotações
+
+```{r}
+renderDataTable ({
+  dados_tbl() %>%
+  select(date, adjusted) %>%
+  arrange(desc(date))
+})
+```
+
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### grafico
+
+```{r}
+renderPlotly({
+  dados_tbl () %>%
+  ggplot(aes(x = date , y = adjusted)) +
+  geom_line()
+  
+})
+```
+
+### gráfico plus
+```{r}
+renderPlotly({
+  tq_get(c("PETR4.SA", "BBAS3.SA", "VALE3.SA", "WEGE3.SA")) %>%
+    group_by(symbol) %>%
+    mutate(cotacao = (adjusted - mean(adjusted)) / sd(adjusted)) %>%
+    ggplot(aes(x = date, y = cotacao, color = symbol)) +
+    geom_line()
+})
+
+```  
+
+
